@@ -16,48 +16,61 @@
 
 namespace InetSocketWrapper
 {
-    typedef const int SocketType;
-    typedef const int InternetProtocol;
+    enum SocketType : int
+    {
+        TCP = SOCK_STREAM,
+        UDP = SOCK_DGRAM,
+        TransmissionControlProtocol = TCP,
+        UserDatagramProtocol = UDP
+    };
+
+    enum InternetProtocol : int
+    {
+        IPv4 = AF_INET,
+        IPv6 = AF_INET6
+    };
 
 #ifdef _WIN32
-
     typedef SOCKET SocketDescriptor;
 
+    class WsaReference
+    {
+        static int wsaReferenced;
+        static WSADATA wsaData;
+    public:
+        WsaReference();
+        ~WsaReference();
+        WsaReference(const WsaReference&);
+    };
+
 #else
-
     typedef int SocketDescriptor;
-
 #endif
+
     typedef uint8_t byte;
 
-    typedef struct
+    struct SocketAddress
     {
         std::string host;
         uint16_t port;
-    } SocketAddress;
 
-    SocketType TransmissionControlProtocol = SOCK_STREAM;
-    SocketType UserDatagramProtocol = SOCK_DGRAM;
-    SocketType TCP = TransmissionControlProtocol;
-    SocketType UDP = UserDatagramProtocol;
-
-    InternetProtocol IPv4 = AF_INET;
-    InternetProtocol IPv6 = AF_INET6;
+        inline bool operator <(const SocketAddress& other) const
+        {
+            if (host < other.host)
+                return true;
+            return port < other.port;
+        }
+    };
 
     class InetSocket
     {
         const int protocol = 0;
-        int domain, type;
+        InternetProtocol domain;
+        SocketType type;
 
+        SocketDescriptor sockfd = -1;
 #ifdef _WIN32
-
-        SOCKET sockfd = INVALID_SOCKET;
-        WSADATA wsaData;
-
-#else
-
-        SocketDescriptor sockfd = -1; // socket descriptor
-
+        WsaReference wsaReference;
 #endif
 
         // tworzenie gniazda do odbierania
@@ -84,7 +97,6 @@ namespace InetSocketWrapper
 
 
         SocketDescriptor Accept(sockaddr *addr, socklen_t &addrlen);
-
 
     public:
 
