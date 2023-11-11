@@ -40,7 +40,7 @@ int InetSocketWrapper::WsaReference::wsaReferenced = 0;
 #include <unistd.h>
 #include <netdb.h>
 
-std::string GetLastStringError()
+static std::string GetLastStringError()
 {
     return std::string(strerror(errno));
 }
